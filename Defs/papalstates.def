@@ -1,0 +1,117 @@
+// removes forbidden list
+delete Maps.europe.forbiden_kingdoms
+
+// allow starting crusades
+CrusadeAction.show_in_action_bar = true
+
+// remove the "ask pope for" actions, since we are the pope
+AskToExcommunicateEnemyAction.show_in_action_bar = (!owner.is_pope)
+AskForCrusadeAction.show_in_action_bar = (!owner.is_pope)
+// AskForAbsolution.show_in_action_bar = (!owner.is_pope)
+// except for ask for absolution, since this is the only way to manually absolve an excommunicated kingdoms
+
+// need to add full action to override commented code in src
+def ExcommunicateAction : CourtPopeAction
+{
+	name = "Excommunicate Kingdom"
+	tooltip = "Have {owner} excommunicate a kingdom from the Catholic church"
+	// updated icon to AskToExcommunicateEnemyAction
+	icon = "Assets/UI/Elements/Actions/Icon_CharacterAction_AskToExcommunicateEnemy.tga:Icon_CharacterAction_AskToExcommunicateEnemy#2" //GUID:c96eb531e261a004c92780eda904f621
+
+    target = "kingdom"
+	show_in_action_bar = true
+
+    outcomes
+    {
+        main success = 100
+        {
+            message
+            {
+                def = ActionOutcomeMessage
+                text caption = "{pope} excommunicated [{target}|a kingdom]"
+                text text = ["Anathema! Anathema! Anathema! Those filthy sinners, the {target:ians} were excommunicated by His Holiness, {pope}!",
+                             "Finally, the sinners from {target} were rightfully excommunicated and are no longer part of the Catholic world!",
+                             "It took only a little convincing on our side for {pope} to excommunicate those filthy dogs, {target}!"]
+            }
+        }
+    }
+
+	prepare_voice_line = null
+}
+
+delete AskForAbsolution
+def AskForAbsolution : CourtPopeAction
+{
+    name = "Absolve Kingdom"
+    tooltip = "Accept an excommunicated kingdom back in the catholic church"
+	icon = "Assets/UI/Elements/Actions/Icon_CharacterAction_AskForAbsolution.tga:Icon_CharacterAction_AskForAbsolution#2" //GUID:58788a5a3b2487e479781862cd275f43
+
+	target = "kingdom"
+	show_in_action_bar = true
+
+	outcomes
+	{
+		main success = 100
+		{
+            message
+            {
+                def = ActionOutcomeMessage
+                sprite icon = "Assets/UI/Elements/msg_icons/Icon_Message_Papacy_Positive.png:Icon_Message_Papacy_Positive#2" //GUID:1a1da5afa360d31489c3ea31d9f612f2
+                text caption = "We granted {target} absolution"
+                text text = "We've decided to give the {target:ians} another chance and granted them absolution. They are no longer excommunicated."
+            }
+		}
+	}
+
+	prepare_voice_line = null
+}
+
+// - Crusades vs orthodox
+// - Crusade against negative relations
+
+// update icon to AskForCrusadeAction
+CrusadeAction.icon = "Assets/UI/Elements/Actions/Icon_CharacterAction_AskForCrusade.tga:Icon_CharacterAction_AskForCrusade#2" //GUID:53badb4016bbdc64e9259cb791ac0576
+
+// Marshall Lead Crusade action
+def ForcedCrusadeAction : CourtPopeAction
+{
+	name = "Lead Crusade"
+	tooltip = $["Ask {pope} to start a new crusade led by {owner}."]
+	icon = "Assets/UI/Elements/Actions/Icon_CharacterAction_ForcedCrusade.tga:Icon_CharacterAction_ForcedCrusade#2" //GUID:ab77f4d2893b8a9448171784659f975b
+	prepare_voice_line = null
+	success_voice_line = "crusade_confirmed"
+	fail_voice_line = "Decline"
+	secondary = true
+	target = "kingdom"
+
+	validate_prompts
+	{
+		text _active_crusade = "{clr:red_bright}There is an ongoing crusade[ against {crusade.target}] already.{/clr}"
+		text _active_lead_offer = "{clr:red_bright}[{pope}|The Pope] is already preparing a crusade[ against {catholic.lead_crusade_offer.target}].{/clr}"
+	}
+
+    success_fail
+    {
+        sf_base = (100)
+        {
+            text name = "Base chance"
+            show_always = false
+        }
+    }
+
+	outcomes
+	{
+		main success
+		{
+			message
+			{
+				text caption = "{WeLeadCrusadeMessage.caption}"
+				text text = $[
+					"{pope} agreed to call a crusade against {target} led by {owner}."
+					]
+				sprite icon = "Assets/UI/Elements/msg_icons/Icon_Message_Papacy_Positive.png:Icon_Message_Papacy_Positive#2" //GUID:1a1da5afa360d31489c3ea31d9f612f2
+				illustration = WeLeadCrusadeMessage.illustration
+			}
+		}
+	}
+}
